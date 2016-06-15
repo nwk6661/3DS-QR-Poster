@@ -15,8 +15,12 @@ def make_qr(repo):
     Takes a github url, uses the github api to get the direct download url and size, and uses google api to make a qr.
     It returns the link to the qr (not on imgur) and the formatted file size
     """
-    repo = repo.rsplit('tag', 1)[0]                         # cut the url up to /tag/
-    repo = repo[18::]                                       # cut out www.~~~ blah up to /user/repo
+    if 'tag' in repo:
+        repo = repo.rsplit('tag', 1)[0]                         # cut the url up to /tag/
+        repo = repo[18::]                                       # cut out www.~~~ blah up to /user/repo
+    else:
+        repo = repo.rsplit('releases', 1)[0]                         # cut the url up to /tag/
+        repo = repo[18::]
     req = requests.get("https://api.github.com/repos" + repo + "latest")        # change to proper api format
     data = json.loads(req.text)
     for item in data['assets']:
