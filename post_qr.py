@@ -86,7 +86,7 @@ def main():
                     finished = make_qr(link_to_release)
                     if finished is not None:                # if 'make_qr()' was a success
                         comment = '[QR Code (' + finished[1] + ')](' + finished[0] + ')' + '\n ***** \n' + finished[2] +'\n'+ finished[3] +'\n'+ finished[4] +'\n'+ finished[5] + '\n ***** \n Made by /u/Im_Soul'  # comment formatting
-                        # submission.add_comment(comment)
+                        submission.add_comment(comment)
                         print(comment)
                         print("Replied to ", submission.id, " on ", time.asctime(time.localtime(time.time())))   # run log
                         posts_scanned.append(submission.id)     # add id to list
