@@ -1,6 +1,6 @@
 # 3DS-QR-Poster
 
-A python bot that creates and posts QR codes to reddit for new 3DS hombrebrew posted on the /r/3DShacks subreddit.
+A python3 bot that creates and posts QR codes to reddit for new 3DS hombrebrew posted on the /r/3DShacks subreddit.
 
     pip install praw
     pip install praw-oauth2util
