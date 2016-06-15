@@ -32,7 +32,7 @@ def make_qr(repo):
             return None
 
 
-r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v0.2'
+r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v0.3'
                 'By /u/Im_Soul')
 
 o = OAuth2Util.OAuth2Util(r)        # create reddit oauth
