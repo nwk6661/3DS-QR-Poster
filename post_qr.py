@@ -1,12 +1,10 @@
 import praw
 import OAuth2Util
-from imgurpython import ImgurClient
 import time
 import requests
 import json
 import os
 import humanize
-from .imgur_auth import *
 
 # sweet mother of imports
 
@@ -28,9 +26,8 @@ def make_qr(repo):
             url = item["browser_download_url"]              # search for keys containing url and size
             file_size = item['size']
             file_size = humanize.naturalsize(file_size)
-            upload = client.upload_from_url(                # google chart api to make qr
-                'https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=' + url + '&choe=UTF-8')
-            return upload['link'], file_size
+            qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8')
+            return qr_url, file_size
         else:
             return None
 
@@ -41,7 +38,6 @@ r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v0.2'
 o = OAuth2Util.OAuth2Util(r)        # create reddit oauth
 # o.refresh()
 
-client = ImgurClient(client_id, client_secret)      # imgur app credentials (from imgur_auth.py)
 
 if not os.path.isfile("posts_scanned.txt"):         # check for posts_scanned.txt, if not, make empty list to store ids
     posts_scanned = []                              # if so, import the ids stored to the file
@@ -61,7 +57,7 @@ for submission in subreddit.get_new(limit=5):       # get 5 posts
             if "release" in submission.url:             # check if it's a release (bad way of doing it)
                 finished = make_qr(link_to_release)
                 if finished is not None:                # if 'make_qr()' was a success
-                    comment = "QR (" + finished[1] + "): " + finished[0] + "\n ***** \n Made by /u/Im_Soul"  # comment formatting
+                    comment = '[QR Code (' + finished[1] + ')](' + finished[0] + ')' + '\n ***** \n Made by /u/Im_Soul'  # comment formatting
                     submission.add_comment(comment)
                     print("Replied to ", submission.id, " on ", time.asctime(time.localtime(time.time())))   # run log
                     posts_scanned.append(submission.id)     # add id to list
