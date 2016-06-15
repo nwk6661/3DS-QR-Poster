@@ -15,21 +15,22 @@ def make_qr(repo):
     """
     repo = repo.rsplit('releases', 1)[0]                         # cut the url up to /releases/
     repo = repo[18::]
-    print(repo)
     req = requests.get("https://api.github.com/repos" + repo + "releases/latest")        # change to proper api format
     data = json.loads(req.text)
     for item in data['assets']:
-        if ".cia" in item['name']:                          # if the download links have cia, make qr, else return None
+        item_name = item['name']
+        print(item_name)
+        if (item_name[(len(item_name)-3)::]) == "cia":      # if the download links have cia, make qr, else return None
             url = item["browser_download_url"]              # search for keys containing url and size
             file_size = item['size']
             file_size = humanize.naturalsize(file_size)
-            qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8')
+            qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8.png')
             return qr_url, file_size
-        else:
-            return None
+    print("nope")
+    return None
 
 
-r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v0.3'
+r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v0.5'
                 'By /u/Im_Soul')
 
 o = OAuth2Util.OAuth2Util(r)        # create reddit oauth
