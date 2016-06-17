@@ -16,3 +16,5 @@ Create a file called `github_credentials.txt` containing
 ```
 
 and nothing else (no newline at end)
+
+Thanks to codepoet for help with SMDH data
