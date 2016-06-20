@@ -18,9 +18,7 @@ def get_cia_info(url):
     """
     req = requests.get(url, headers={'Range': 'bytes=11292-11299'})
     rawsize = req.headers['Content-Range'].split('/')[1]
-
-    val = struct.unpack('!Q', req.content)
-    titleid = "0x%0.16X" % val[0]
+    titleid = "0x%0.16X" % struct.unpack('!Q', req.content)[0]
 
     req = requests.get(url, headers={'Range': 'bytes='+str(int(rawsize)-12984)+"-"+str(int(rawsize)-12984+511)})
     shortdesc = req.text[0:128].translate({ord(c): None for c in '\x00'})    # strip
@@ -35,8 +33,7 @@ def determine_api_url(original_url):
     """
     Convert our original reddit URL into a corresponding github API url for the release.
     """
-    upr_string = original_url.split('github.com/', 1)[1]
-    upr_tokens = upr_string.split('/')
+    upr_tokens = original_url.split('github.com/', 1)[1].split('/')
 
     if upr_tokens[0] and upr_tokens[1]:             # make sure we have a user and a project at least
         if len(upr_tokens) >= 5 and upr_tokens[4] is not '':
@@ -56,16 +53,14 @@ def make_qr(github_api_url, headers, auth):
     data = json.loads(req.text)
     if 'assets' in data:
         for item in data['assets']:
-            item_name = item['name']
-            if (item_name[(len(item_name)-3)::]) == "cia":      # if the download links have cia, make qr, else return None
+            if (item['name'][-3::]) == "cia":                   # if the download links have cia, make qr, else return None
                 url = item["browser_download_url"]              # search for keys containing url and size
                 ciainfo = get_cia_info(url)
 
-                file_size = item['size']
-                file_size = humanize.naturalsize(file_size)
+                file_size = humanize.naturalsize(item['size'])
                 qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8.png')
                 if ciainfo[0][0:6] == "0x0004":                 # only add to the list if this is a 3DS cia
-                    retlist.append((qr_url, item_name, file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3]))
+                    retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3]))
 
     req.close()
     return retlist
@@ -80,31 +75,26 @@ def main():
 
     gc = open('github_credentials.txt')
     auth = [i for i in gc]
-    ghauth = (auth[0].rstrip('\n'), auth[1].rstrip('\n'))
+    ghauth = (auth[0].rstrip('\n').rstrip('\r'), auth[1].rstrip('\n').rstrip('\r'))
+    gc.close()
 
     headers = {
         'User-Agent': '3DS-QR-Bot',
     }
 
-    if not os.path.isfile("posts_scanned.txt"):         # check for posts_scanned.txt, if not, make empty list to store ids
-        posts_scanned = []                              # if so, import the ids stored to the file
-
+    if os.path.isfile("posts_scanned.txt"):             # check for posts_scanned.txt
+        with open("posts_scanned.txt", "r") as f:       # if so, import the ids stored to the file
+            posts_scanned = list(filter(None, f.read().split("\n")))
     else:
-        with open("posts_scanned.txt", "r") as f:
-            posts_scanned = f.read()
-            posts_scanned = posts_scanned.split("\n")
-            posts_scanned = list(filter(None, posts_scanned))
+        posts_scanned = []                              # if not, make empty list to store ids
 
-    if not os.path.isfile("run_log.txt"):               # check for run_log.txt, if not, make empty list to store ids
-        run_log = []                                    # if so, import the ids stored to the file
-
+    if os.path.isfile("run_log.txt"):                   # check for run_log.txt
+        with open("run_log.txt", "r") as l:             # if so, import the ids stored to the file
+            run_log = list(filter(None, l.read().split("\n")))
     else:
-        with open("run_log.txt", "r") as l:
-            run_log = l.read()
-            run_log = run_log.split("\n")
-            run_log = list(filter(None, run_log))
+        run_log = []                                    # otherwise, make an empty list
 
-    subreddit = r.get_subreddit('3dshacks')                 # subreddit to scan
+    subreddit = r.get_subreddit('3dshacks')             # subreddit to scan
 
     for submission in subreddit.get_new(limit=5):       # get 5 posts
         if submission.id not in posts_scanned:          # check if we already checked the id
@@ -113,24 +103,23 @@ def main():
                 api_url = determine_api_url(submission.url)
                 if api_url:
                     qrlist = make_qr(api_url, headers, ghauth)
-                if qrlist:                  # if 'make_qr()' was a success
-                    for qrentry in qrlist:
-                        comment = comment +\
-                                  'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
-                                  '\n' +\
-                                  '* Title ID: ' + qrentry[3] + '  \n' +\
-                                  '* Short Description: ' + qrentry[4] + '  \n' +\
-                                  '* Long Description: ' + qrentry[5] + '  \n' +\
-                                  '* Publisher: ' + qrentry[6] + '  \n' +\
-                                  '\n' +\
-                                  '*****\n'
-                    if comment is not '':               # check if we have anything to post
-                        comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)'
-                        submission.add_comment(comment)
-                        print(comment)
-                        log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
-                        run_log.append(log)                     # log post id and time a post was replied to
-                        posts_scanned.append(submission.id)     # add id to list
+                    if qrlist:                          # if 'make_qr()' was a success
+                        for qrentry in qrlist:
+                            comment += 'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
+                                       '\n' +\
+                                       '* Title ID: ' + qrentry[3] + '  \n' +\
+                                       '* Short Description: ' + qrentry[4] + '  \n' +\
+                                       '* Long Description: ' + qrentry[5] + '  \n' +\
+                                       '* Publisher: ' + qrentry[6] + '  \n' +\
+                                       '\n' +\
+                                       '*****\n'
+                        if comment is not '':               # check if we have anything to post
+                            comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)'
+                            submission.add_comment(comment)
+                            print(comment)
+                            log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
+                            run_log.append(log)                     # log post id and time a post was replied to
+                            posts_scanned.append(submission.id)     # add id to list
 
     with open("posts_scanned.txt", "w") as f:               # write from posts_scanned list to the file
         for post_id in posts_scanned:
