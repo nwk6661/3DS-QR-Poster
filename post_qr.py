@@ -35,11 +35,11 @@ def determine_api_url(original_url):
     """
     upr_tokens = original_url.split('github.com/', 1)[1].split('/')
 
-    if upr_tokens[0] and upr_tokens[1]:             # make sure we have a user and a project at least
+    if len(upr_tokens) >= 2 and upr_tokens[0] and upr_tokens[1]:   # make sure we have a user and a project at least
         if len(upr_tokens) >= 5 and upr_tokens[4] is not '':
             return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + upr_tokens[4]
         return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/latest"
-    return
+    return None
 
 
 def make_qr(github_api_url, headers, auth):
@@ -79,7 +79,7 @@ def main():
     gc.close()
 
     headers = {
-        'User-Agent': '3DS-QR-Bot',
+        'User-Agent': '3DS-QR-Poster',
     }
 
     if os.path.isfile("posts_scanned.txt"):             # check for posts_scanned.txt
@@ -114,7 +114,7 @@ def main():
                                        '\n' +\
                                        '*****\n'
                         if comment is not '':               # check if we have anything to post
-                            comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)'
+                            comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
                             submission.add_comment(comment)
                             print(comment)
                             log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
