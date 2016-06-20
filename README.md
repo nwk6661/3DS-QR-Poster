@@ -11,8 +11,10 @@ A python3 bot that creates and posts QR codes to reddit for new 3DS hombrebrew p
 You will need to [set up oauth2util](https://github.com/SmBe19/praw-OAuth2Util/blob/master/OAuth2Util/README.md)
 Create a file called `github_credentials.txt` containing
 ```
-username
-password
+'username'
+'password'
 ```
 
 and nothing else (no newline at end)
+
+Thanks to codepoet82 for help with SMDH data
