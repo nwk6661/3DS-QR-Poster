@@ -17,16 +17,20 @@ def get_cia_info(url):
     It returns titleid, shortdesc, longdesc, publisher
     """
     req = requests.get(url, headers={'Range': 'bytes=11292-11299'})
-    rawsize = req.headers['Content-Range'].split('/')[1]
+    if req.headers['content-length'] != '8':               # abort if we get a bad length
+        return None
     titleid = "0x%0.16X" % struct.unpack('!Q', req.content)[0]
+    rawsize = req.headers['Content-Range'].split('/')[1]
 
     req = requests.get(url, headers={'Range': 'bytes='+str(int(rawsize)-12984)+"-"+str(int(rawsize)-12984+511)})
+    if req.headers['content-length'] != '512':             # abort if we get a bad length
+        return None
     shortdesc = req.text[0:128].translate({ord(c): None for c in '\x00'})    # strip
     longdesc = req.text[128:384].translate({ord(c): None for c in '\x00'})   # the
     publisher = req.text[384:512].translate({ord(c): None for c in '\x00'})  # nulls!
 
     req.close()
-    return titleid, shortdesc, longdesc, publisher
+    return (titleid, shortdesc, longdesc, publisher)
 
 
 def determine_api_url(original_url):
@@ -56,11 +60,11 @@ def make_qr(github_api_url, headers, auth):
             if (item['name'][-3::]) == "cia":                   # if the download links have cia, make qr, else return None
                 url = item["browser_download_url"]              # search for keys containing url and size
                 ciainfo = get_cia_info(url)
-
-                file_size = humanize.naturalsize(item['size'])
-                qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8.png')
-                if ciainfo[0][0:6] == "0x0004":                 # only add to the list if this is a 3DS cia
-                    retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3]))
+                if ciainfo:
+                    file_size = humanize.naturalsize(item['size'])
+                    qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8.png')
+                    if ciainfo[0][0:6] == "0x0004":                 # only add to the list if this is a 3DS cia
+                        retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3]))
 
     req.close()
     return retlist
