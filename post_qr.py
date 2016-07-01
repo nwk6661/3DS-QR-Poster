@@ -8,6 +8,7 @@ import json
 import os
 import humanize
 import struct
+from bs4 import BeautifulSoup
 
 # sweet mother of imports
 
@@ -102,28 +103,40 @@ def main():
 
     for submission in subreddit.get_new(limit=5):       # get 5 posts
         if submission.id not in posts_scanned:          # check if we already checked the id
+
             if 'github.com' in submission.url:          # check if url is github
                 comment = ''                            # blank out our comments
                 api_url = determine_api_url(submission.url)
-                if api_url:
-                    qrlist = make_qr(api_url, headers, ghauth)
-                    if qrlist:                          # if 'make_qr()' was a success
-                        for qrentry in qrlist:
-                            comment += 'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
-                                       '\n' +\
-                                       '* Title ID: ' + qrentry[3] + '  \n' +\
-                                       '* Short Description: ' + qrentry[4] + '  \n' +\
-                                       '* Long Description: ' + qrentry[5] + '  \n' +\
-                                       '* Publisher: ' + qrentry[6] + '  \n' +\
-                                       '\n' +\
-                                       '*****\n'
-                        if comment is not '':               # check if we have anything to post
-                            comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
-                            submission.add_comment(comment)
-                            print(comment)
-                            log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
-                            run_log.append(log)                     # log post id and time a post was replied to
-                            posts_scanned.append(submission.id)     # add id to list
+
+            elif 'gbatemp.net' in submission.url:
+                html_data = requests.get(submission.url)
+                soup = BeautifulSoup(html_data.text, "html.parser")
+                links = [link.get('href', '') for link in soup.find_all('a') \
+                    if ("github" in link.get('href', '')) and ("release" in link.get('href', ''))]
+                api_url = determine_api_url(links[0])
+
+            else:
+                api_url = None
+
+            if api_url:
+                qrlist = make_qr(api_url, headers, ghauth)
+                if qrlist:                          # if 'make_qr()' was a success
+                    for qrentry in qrlist:
+                        comment += 'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
+                                   '\n' +\
+                                   '* Title ID: ' + qrentry[3] + '  \n' +\
+                                   '* Short Description: ' + qrentry[4] + '  \n' +\
+                                   '* Long Description: ' + qrentry[5] + '  \n' +\
+                                   '* Publisher: ' + qrentry[6] + '  \n' +\
+                                   '\n' +\
+                                   '*****\n'
+                    if comment is not '':               # check if we have anything to post
+                        comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
+                        #submission.add_comment(comment)
+                        print(comment)
+                        log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
+                        run_log.append(log)                     # log post id and time a post was replied to
+                        posts_scanned.append(submission.id)     # add id to list
 
     with open("posts_scanned.txt", "w") as f:               # write from posts_scanned list to the file
         for post_id in posts_scanned:
@@ -133,5 +146,12 @@ def main():
         for log_entry in run_log:
             l.write(log_entry + "\n")
 
+    o.refresh()
+
 if __name__ == '__main__':
-    main()
+    times = 1
+    while True:
+        main()
+        print("Run {0} times, sleeping for 60s".format(times))
+        time.sleep(60)
+        times += 1
