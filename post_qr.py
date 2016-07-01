@@ -113,7 +113,10 @@ def main():
                 soup = BeautifulSoup(html_data.text, "html.parser")
                 links = [link.get('href', '') for link in soup.find_all('a') \
                     if ("github" in link.get('href', '')) and ("release" in link.get('href', ''))]
-                api_url = determine_api_url(links[0])
+                if len(links) > 0:
+                    api_url = determine_api_url(links[0])
+                else:
+                    api_url = None
 
             else:
                 api_url = None
