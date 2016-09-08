@@ -8,6 +8,7 @@ import json
 import os
 import humanize
 import struct
+import re
 from bs4 import BeautifulSoup
 
 # sweet mother of imports
@@ -51,7 +52,7 @@ def make_qr(github_api_url, headers, auth):
     """
     Takes a github api URL to get the direct download url and size, and uses google api to make a qr.
     It returns a list of tuples containing the link to the qr, file name, and the formatted file size, as well as the titleID,
-    short description, long description, and publisher fields from the SMDH data.
+    short description, long description, and publisher fields from the SMDH data. It also returns the body and name of the release.
     """
     retlist = []    # define a blank list to return
     req = requests.get(github_api_url, headers=headers, auth=auth)
@@ -65,7 +66,18 @@ def make_qr(github_api_url, headers, auth):
                     file_size = humanize.naturalsize(item['size'])
                     qr_url = ('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' + url + '&choe=UTF-8.png')
                     if ciainfo[0][0:6] == "0x0004":                 # only add to the list if this is a 3DS cia
-                        retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3]))
+                        cia = 'ok'
+
+    body = data['body'].split('\r')
+    for v, i in enumerate(body):
+        if ("http://" in i) or ("https://" in i):
+            body.pop(v)
+
+    body = ' '.join(body)
+
+    if cia == 'ok':
+        retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3],
+                        data['tag_name'], body))
 
     req.close()
     return retlist
@@ -77,6 +89,10 @@ def main():
 
     o = OAuth2Util.OAuth2Util(r)        # create reddit oauth
     # o.refresh()
+    
+    #files are opened from pwd
+    #cd to script's own directory to allow execution from elsewhere
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
     gc = open('github_credentials.txt')
     auth = [i for i in gc]
@@ -109,6 +125,7 @@ def main():
                 api_url = determine_api_url(submission.url)
 
             elif 'gbatemp.net' in submission.url:
+                comment = ''
                 html_data = requests.get(submission.url)
                 soup = BeautifulSoup(html_data.text, "html.parser")
                 links = [link.get('href', '') for link in soup.find_all('a') \
@@ -121,23 +138,28 @@ def main():
             else:
                 api_url = None
 
-            if api_url:
+            if api_url is not None:
                 qrlist = make_qr(api_url, headers, ghauth)
                 if qrlist:                          # if 'make_qr()' was a success
                     for qrentry in qrlist:
-                        comment += 'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
-                                   '\n' +\
-                                   '* Title ID: ' + qrentry[3] + '  \n' +\
-                                   '* Short Description: ' + qrentry[4] + '  \n' +\
-                                   '* Long Description: ' + qrentry[5] + '  \n' +\
-                                   '* Publisher: ' + qrentry[6] + '  \n' +\
-                                   '\n' +\
-                                   '*****\n'
+                        comment += \
+                            'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
+                            '\n' +\
+                            '* Title ID: ' + qrentry[3] + '  \n' +\
+                            '* Short Description: ' + qrentry[4] + '  \n' +\
+                            '* Long Description: ' + qrentry[5] + '  \n' +\
+                            '* Publisher: ' + qrentry[6] + '  \n' +\
+                            '***********************  \n' +\
+                            '**Description for ' + qrentry[7] + ':**  \n' +\
+                            qrentry[8] + '  \n'
+
                     if comment is not '':               # check if we have anything to post
                         comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
-                        #submission.add_comment(comment)
+                        submission.add_comment(comment)
                         print(comment)
                         log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
+                        requests.post("https://api.titledb.com/v0/",
+                                      data=json.dumps({ "action": "add", "url": qrentry[0]}), headers=headers) #Add to titledb
                         run_log.append(log)                     # log post id and time a post was replied to
                         posts_scanned.append(submission.id)     # add id to list
 
@@ -149,12 +171,5 @@ def main():
         for log_entry in run_log:
             l.write(log_entry + "\n")
 
-    o.refresh()
-
 if __name__ == '__main__':
-    times = 1
-    while True:
-        main()
-        print("Run {0} times, sleeping for 60s".format(times))
-        time.sleep(60)
-        times += 1
+    main()
