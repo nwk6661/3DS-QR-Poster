@@ -1,5 +1,17 @@
+<<<<<<< HEAD
 /oauth.ini
 /posts_scanned.txt
 /run_log.txt
 /github_credentials.txt
 /LICENSE
+=======
+/github_credentials.txt
+/LICENSE
+/oauth.ini
+/posts_scanned.txt
+/Procfile
+/README.md
+/requirements.txt
+/runtime.txt
+/run_log.txt
+>>>>>>> 15debce227db26aebe657a2c97bc1c3b35ec14a6
