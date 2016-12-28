@@ -8,7 +8,6 @@ import json
 import os
 import humanize
 import struct
-import re
 from bs4 import BeautifulSoup
 
 # sweet mother of imports
@@ -39,12 +38,14 @@ def determine_api_url(original_url):
     """
     Convert our original reddit URL into a corresponding github API url for the release.
     """
-    upr_tokens = original_url.split('github.com/', 1)[1].split('/')
+    upr_tokens = original_url.split('github.com/', 1)[1].split('/')  # author, repo, "releases", "tags" tag
 
     if len(upr_tokens) >= 2 and upr_tokens[0] and upr_tokens[1]:   # make sure we have a user and a project at least
         if len(upr_tokens) >= 5 and upr_tokens[4] is not '':
             return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + upr_tokens[4]
-        return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/latest"
+        url = "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/tags"
+        tag_name = json.loads(requests.get(url).text)[0]["name"] # one liners lol
+        return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + tag_name
     return None
 
 
@@ -118,7 +119,7 @@ def main():
     for submission in subreddit.get_new(limit=5):       # get 5 posts
         if submission.id not in posts_scanned:          # check if we already checked the id
 
-            if 'github.com' in submission.url:          # check if url is github
+            if 'github.com' in submission.url.lower():          # check if url is github
                 comment = ''                            # blank out our comments
                 api_url = determine_api_url(submission.url)
 
@@ -150,7 +151,7 @@ def main():
                             '*****  \n\n' +\
                             '**Description for ' + qrentry[7] + ':**  \n\n' +\
                             qrentry[8] + '  \n' +\
-                            '*****\n'
+                            '*****  \n'
 
                     if comment is not '':               # check if we have anything to post
                         comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
