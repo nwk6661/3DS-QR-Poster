@@ -83,7 +83,7 @@ def make_qr(github_api_url, headers, auth):
 
 def main():
 
-    r = praw.Reddit('3DS Homebrew QR Poster for /r/3DSHacks v1.0'
+    r = praw.Reddit(r'3DS Homebrew QR Poster for /r/3DSHacks v1.0'
                     'By /u/Im_Soul')
 
     o = OAuth2Util.OAuth2Util(r)        # create reddit oauth
