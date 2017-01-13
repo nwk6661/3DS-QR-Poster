@@ -76,7 +76,7 @@ def make_qr(github_api_url, headers, auth):
                         retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3],
                         data['tag_name'], body))
 
-    print(retlist)
+    #print(retlist)
 
     req.close()
     return retlist
@@ -140,6 +140,7 @@ def main():
             if api_url is not None:
                 qrlist = make_qr(api_url, headers, ghauth)
                 if qrlist:                          # if 'make_qr()' was a success
+                    item = 0
                     for qrentry in qrlist:
                         comment += \
                             'QR Code for ['+ qrentry[1] + ' (' + qrentry[2] + ')](' + qrentry[0] + ')  \n' +\
@@ -148,10 +149,13 @@ def main():
                             '* Short Description: ' + qrentry[4] + '  \n' +\
                             '* Long Description: ' + qrentry[5] + '  \n' +\
                             '* Publisher: ' + qrentry[6] + '  \n\n' +\
-                            '*****  \n\n' +\
-                            '**Description for ' + qrentry[7] + ':**  \n\n' +\
-                            qrentry[8] + '  \n' +\
-                            '*****  \n'
+                            '*****  \n\n'
+                        item += 1
+                        if item == len(qrlist):
+                            comment += \
+                                '**Description for ' + qrentry[7] + ':**  \n\n' +\
+                                qrentry[8] + '  \n\n' +\
+                                '*****  \n'
 
                     if comment is not '':               # check if we have anything to post
                         comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
