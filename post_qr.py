@@ -44,8 +44,11 @@ def determine_api_url(original_url):
         if len(upr_tokens) >= 5 and upr_tokens[4] is not '':
             return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + upr_tokens[4]
         url = "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/tags"
-        tag_name = json.loads(requests.get(url).text)[0]["name"] # one liners lol
-        return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + tag_name
+        try:
+            tag_name = json.loads(requests.get(url).text)[0]["name"] # one liners lol
+            return "https://api.github.com/repos/" + upr_tokens[0] + "/" + upr_tokens[1] + "/releases/tags/" + tag_name
+        except IndexError:  # If one of the posts does not have any releases, it will not terminate the program
+            return None     # This fixes the posts scanned prior not saving
     return None
 
 
