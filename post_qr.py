@@ -165,8 +165,8 @@ def main():
                         submission.add_comment(comment)
                         print(comment)
                         log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
-                        requests.post("https://api.titledb.com/v0/",
-                                      data=json.dumps({ "action": "add", "url": qrentry[0]}), headers=headers) #Add to titledb
+                        requests.put("https://api.titledb.com/v1/submission",
+                                      data=json.dumps({"url": qrentry[0]}), headers=headers) #Add to titledb
                         run_log.append(log)                     # log post id and time a post was replied to
                         posts_scanned.append(submission.id)     # add id to list
 
