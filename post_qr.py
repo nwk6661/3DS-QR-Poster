@@ -77,7 +77,7 @@ def make_qr(github_api_url, headers, auth):
 
                         body = ' '.join(body)
                         retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3],
-                        data['tag_name'], body))
+                        data['tag_name'], body, url))
 
     #print(retlist)
 
@@ -166,7 +166,7 @@ def main():
                         print(comment)
                         log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
                         requests.put("https://api.titledb.com/v1/submission",
-                                      data=json.dumps({"url": qrentry[0]}), headers=headers) #Add to titledb
+                                      data=json.dumps({"url": qrentry[9]}), headers=headers) #Add to titledb
                         run_log.append(log)                     # log post id and time a post was replied to
                         posts_scanned.append(submission.id)     # add id to list
 
