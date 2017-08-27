@@ -61,6 +61,7 @@ def make_qr(github_api_url, headers, auth):
     retlist = []    # define a blank list to return
     req = requests.get(github_api_url, headers=headers, auth=auth)
     data = json.loads(req.text)
+    print(data)
     if 'assets' in data:
         for item in data['assets']:
             if (item['name'][-3::]) == "cia":                   # if the download links have cia, make qr, else return None
@@ -79,7 +80,6 @@ def make_qr(github_api_url, headers, auth):
                         retlist.append((qr_url, item['name'], file_size, ciainfo[0], ciainfo[1], ciainfo[2], ciainfo[3],
                         data['tag_name'], body, url))
 
-    #print(retlist)
 
     req.close()
     return retlist
