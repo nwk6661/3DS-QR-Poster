@@ -61,7 +61,6 @@ def make_qr(github_api_url, headers, auth):
     retlist = []    # define a blank list to return
     req = requests.get(github_api_url, headers=headers, auth=auth)
     data = json.loads(req.text)
-    print(data)
     if 'assets' in data:
         for item in data['assets']:
             if (item['name'][-3::]) == "cia":                   # if the download links have cia, make qr, else return None
@@ -161,7 +160,7 @@ def main():
                                 '*****  \n'
 
                     if comment is not '':               # check if we have anything to post
-                        comment += '*[3DS QR Bot](https://github.com/thesouldemon/3DS-QR-Poster)*'
+                        comment += '*[3DS QR Bot](https://github.com/nwk6661/3DS-QR-Poster)*'
                         submission.add_comment(comment)
                         print(comment)
                         log = "Replied to " + submission.id + " on " + time.asctime(time.localtime(time.time()))
